@@ -27,20 +27,29 @@ export default class InterviewRepository{
         try {
             const student = await StudentModel.findById(studentId);
             const interview = await InterviewModel.findById(interviewId);
+    
             if (!student || !interview) {
                 throw new Error("Student or Interview not found");
             }
-            if (interview.students.includes(studentId)) {
-                throw new Error("Student is already assigned to this interview");
+    
+            const studentUpdate = await StudentModel.updateOne(
+                { _id: studentId, 'interviews': { $ne: interviewId } },
+                { $push: { interviews: new ObjectId(interviewId) } } 
+            );
+    
+            const interviewUpdate = await InterviewModel.updateOne(
+                { _id: interviewId, 'students': { $ne: studentId } },  
+                { $push: { students: new ObjectId(studentId) } } 
+            );
+    
+            if (studentUpdate.nModified === 0 || interviewUpdate.nModified === 0) {
+                throw new Error("Student or Interview was not updated");
             }
-            student.interviews.push(new ObjectId(interviewId));
-            await student.save();
-            interview.students.push(new ObjectId(studentId));
-            await interview.save()
+    
             return { message: "Student added to interview successfully" };
-
         } catch (error) {
-            throw new Error("something went wrong"); 
+            console.log(error);
+            throw new Error("Something went wrong while adding student to interview");
         }
     }
 
@@ -55,15 +64,25 @@ export default class InterviewRepository{
 
 
     }
-
+ 
     async deleteInterview(interviewid){
 
         try {
-            await InterviewModel.deleteOne({_id:new ObjectId(interviewid)})
-            return "successfully deleted"
+            const interview = await InterviewModel.findById(interviewid);
+            if (!interview) {
+                throw new Error("Interview not found");
+            }
+    
+            await StudentModel.updateMany(
+                { _id: { $in: interview.students } },
+                { $pull: { interviews: interviewid } }
+            );
+    
+            await InterviewModel.deleteOne({ _id: interviewid });
+    
+            return "Successfully deleted interview and references";
         } catch (error) {
-            throw new Error("something went wrong");
-            
+            throw new Error("Something went wrong");
         }
     }
 
@@ -88,6 +107,14 @@ export default class InterviewRepository{
         }
     }
 
+    async getAll(){
+        try {
+            const interviews = await InterviewModel.find()
+            return interviews
+        } catch (error) {
+            throw new Error(`Error updating Interview: ${error.message}`);
+        }
+    }
 
 
 }
