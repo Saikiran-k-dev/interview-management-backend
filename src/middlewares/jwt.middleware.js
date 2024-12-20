@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken"
 
-const jwtAuth = async(req,res,next){
+const jwtAuth = async(req,res,next)=>{
     try {
         const token = req.headers['authorization']
         if(!token){
@@ -14,3 +14,5 @@ const jwtAuth = async(req,res,next){
         res.status(403).send("Invalid or expired token");
     }
 }
+
+export default jwtAuth
