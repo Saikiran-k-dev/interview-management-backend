@@ -25,7 +25,7 @@ interviewRouter.delete(":/id",(req,res)=>{
     interviewController.deleteInterview(req,res)
 })
 
-interviewController.put("/:id",(req,res)=>{
+interviewRouter.put("/:id",(req,res)=>{
     interviewController.addStudentToInterview(req,res)
 })
 
